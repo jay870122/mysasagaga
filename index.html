@@ -3,32 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>曼鯊鯊開學季刮刮樂</title>
+  <title>曼鯊鯊聖誕刮刮樂</title>
   <style>
     /* ----- 全局與排版 ----- */
     body { 
       text-align: center; 
       font-family: "微軟正黑體", sans-serif; 
-      background: #f7f9fc; 
+      background: #FFF5EE; 
       margin: 0; 
-      /* 防止手機上下拉動重整 */
       overscroll-behavior: none; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: #333;
     }
     
-    h2 { color: #333; margin-top: 20px; }
-
-    /* ----- 輸入框區域 (如果沒帶參數時顯示) ----- */
-    #inputSection {
-      margin: 20px auto;
-      padding: 15px;
-      background: white;
-      max-width: 90%;
-      border-radius: 10px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: none; /* 預設隱藏，由 JS 控制顯示 */
+    h2 { 
+      color: #c62828; 
+      margin-bottom: 20px; 
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
-    input { padding: 8px; font-size: 16px; width: 60%; border: 1px solid #ccc; border-radius: 4px; }
-    #searchBtn { padding: 8px 16px; font-size: 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+
+    /* ----- 輸入框區域 ----- */
+    #inputSection {
+      padding: 25px;
+      background: white;
+      width: 85%;
+      max-width: 400px;
+      border-radius: 15px;
+      border: 2px solid #2e7d32; 
+      box-shadow: 0 4px 15px rgba(46, 125, 50, 0.2);
+      display: none; 
+    }
+    input { 
+      padding: 10px; font-size: 16px; width: 60%; 
+      border: 1px solid #ccc; border-radius: 6px; 
+      margin-right: 5px;
+    }
+    #searchBtn { 
+      padding: 10px 20px; font-size: 16px; 
+      background: #c62828; 
+      color: white; 
+      border: none; border-radius: 6px; cursor: pointer; 
+      font-weight: bold;
+    }
+    #searchBtn:hover { background: #b71c1c; }
 
     /* ----- 刮刮樂區域 ----- */
     .wrapper { 
@@ -38,16 +59,19 @@
       margin: 20px auto; 
       user-select: none;
       -webkit-user-select: none;
-      display: none; /* 資料載入後才顯示 */
+      display: none; 
+      border: 5px solid #c62828; 
+      border-radius: 16px;
+      box-shadow: 0 6px 15px rgba(198, 40, 40, 0.3);
     }
     
     #prize {
-      font-size: 24px; font-weight: bold; color: #333;
+      font-size: 24px; font-weight: bold; color: #2e7d32; 
       text-align: center; line-height: 150px;
-      position: absolute; width: 300px; height: 150px;
-      background: white; border-radius: 12px;
+      position: absolute; width: 100%; height: 100%;
+      background: white; 
+      border-radius: 10px; 
       visibility: visible;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
@@ -55,8 +79,7 @@
 
     #scratchCanvas {
       position: absolute; top: 0; left: 0;
-      border-radius: 12px;
-      transition: opacity 1s ease;
+      border-radius: 10px;
       cursor: crosshair;
       z-index: 2;
     }
@@ -67,9 +90,9 @@
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
       font-size: 18px;
-      color: #333;
+      color: #fff; 
       font-weight: bold;
-      text-shadow: 1px 1px 2px white;
+      text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
       animation: pulse 1.2s infinite;
       pointer-events: none;
       user-select: none;
@@ -77,25 +100,28 @@
     }
     @keyframes pulse {
       0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 0.5; transform: translate(-50%, -50%) scale(1.1); }
+      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
       100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
 
     /* ----- 按鈕與連結 ----- */
-    #actionArea { margin-top: 20px; min-height: 50px; }
+    #actionArea { margin-top: 25px; min-height: 60px; }
     
     #rewardLink {
-      display: none; /* 刮開且有連結時才顯示 */
+      display: none; 
       margin-top: 15px; 
-      font-size: 18px; 
+      font-size: 16px; 
       color: white;
-      background-color: #00C300; /* LINE Green */
-      padding: 10px 20px;
+      background-color: #2e7d32; 
+      padding: 12px 24px;
       text-decoration: none;
       border-radius: 50px;
       font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      border: 2px solid #1b5e20;
+      box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
+      transition: transform 0.2s;
     }
+    #rewardLink:active { transform: scale(0.95); }
 
     #revealBtn {
       margin-top: 10px;
@@ -103,61 +129,46 @@
       font-size: 16px;
       border: none;
       border-radius: 8px;
-      background: #4CAF50;
-      color: white;
+      background: #fbc02d; 
+      color: #333;
+      font-weight: bold;
       cursor: pointer;
-      display: none; /* 資料載入後顯示 */
+      display: none;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    #revealBtn:hover { background: #45a049; }
+    #revealBtn:hover { background: #f9a825; }
 
-    #statusMessage { font-size: 1.2em; color: #555; margin: 20px; font-weight: bold; }
-
-    /* ----- 底部紀錄列表 ----- */
-    .log-container { margin-top: 40px; padding: 10px; background: #fff; border-top: 1px solid #eee; }
-    table { width: 90%; max-width: 500px; margin: 10px auto; border-collapse: collapse; font-size: 14px; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background-color: #f2f2f2; }
+    #statusMessage { font-size: 1.1em; color: #555; margin: 15px; font-weight: bold; min-height: 24px;}
   </style>
 </head>
 <body>
 
-  <h2>🎉 曼鯊鯊開學季刮刮樂 🎉</h2>
+  <h2>🎄 曼鯊鯊聖誕刮刮樂 🎅</h2>
 
   <div id="statusMessage"></div>
 
   <div id="inputSection">
-    <p>請輸入抽獎序號：</p>
-    <input type="text" id="serialInput" placeholder="例如: SHARK001">
-    <button id="searchBtn" onclick="manualStart()">開始</button>
+    <div style="margin-bottom:10px; font-weight:bold; color:#2e7d32;">🎁 請輸入聖誕序號：</div>
+    <input type="text" id="serialInput" placeholder="例如: XMAS123">
+    <button id="searchBtn" onclick="manualStart()">領取禮物</button>
   </div>
 
   <div class="wrapper" id="scratchWrapper">
     <div id="prize">載入中...</div>
     <canvas id="scratchCanvas" width="300" height="150"></canvas>
-    <div id="hint">👉 用手指或滑鼠刮開我！</div>
+    <div id="hint">👉 刮開金色圖層領禮物！</div>
   </div>
 
   <div id="actionArea">
-    <a id="rewardLink" href="#" target="_blank">👉 點此至 LINE 領取獎品!</a>
+    <a id="rewardLink" href="#" target="_blank">👉 點我前往LINE領取點數</a>
     <br>
-    <button id="revealBtn">直接顯示獎品 🎁</button>
-  </div>
-
-  <div class="log-container">
-    <h3>🏆 最新中獎名單</h3>
-    <p id="todayCount">今日抽獎人數：載入中...</p>
-    <table id="logTable">
-      <thead><tr><th>獎品</th><th>時間</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <button id="revealBtn">直接打開禮物 🎁</button>
   </div>
 
   <script>
-    // ⚠️⚠️ 請替換成你的 GAS 部署網址 ⚠️⚠️
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxHEwjdt1URWlRsDpuZFn-Mgqi62l_vSjtAa9up21d37UblgtnNPQgmW3SkDZTe_S2jtw/exec";
     
-    // 全局變數
-    let prizeUrlData = ""; // 儲存 API 回傳的領獎連結
+    let prizeUrlData = ""; 
     const canvas = document.getElementById("scratchCanvas");
     const ctx = canvas.getContext("2d");
     const prizeDiv = document.getElementById("prize");
@@ -167,25 +178,17 @@
     const wrapper = document.getElementById("scratchWrapper");
     const statusMsg = document.getElementById("statusMessage");
 
-    // 初始化
     window.onload = function() {
-        fetchLogs(); // 載入紀錄
-
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
 
         if (code) {
-            // 自動模式
-            statusMsg.innerText = "⏳ 正在確認序號...";
+            statusMsg.innerText = "🎅 聖誕老公公正在查詢...";
             startLottery(code);
         } else {
-            // 手動模式
             document.getElementById("inputSection").style.display = "block";
             statusMsg.innerText = "";
         }
-        
-        // 預先繪製銀漆 (避免空白)
-        resetCanvas();
     };
 
     function manualStart() {
@@ -193,28 +196,23 @@
         if(!inputCode) return alert("請輸入序號");
         
         document.getElementById("inputSection").style.display = "none";
-        statusMsg.innerText = "⏳ 正在確認序號...";
+        statusMsg.innerText = "🎅 聖誕老公公正在查詢...";
         startLottery(inputCode);
     }
 
-    // --- API 核心邏輯 ---
     function startLottery(code) {
         fetch(`${GAS_API_URL}?code=${code}`)
             .then(res => res.json())
             .then(data => {
-                statusMsg.innerText = ""; // 清除載入文字
+                statusMsg.innerText = ""; 
                 
                 if (data.status === "error") {
-                    statusMsg.innerHTML = `<span style="color:red">❌ ${data.message}</span>`;
-                    document.getElementById("inputSection").style.display = "block"; // 讓使用者重新輸入
+                    statusMsg.innerHTML = `<span style="color:#c62828">❌ ${data.message}</span>`;
+                    document.getElementById("inputSection").style.display = "block"; 
                     return;
                 }
 
-                // 資料獲取成功
                 setupScratchCard(data);
-                
-                // 再次刷新紀錄
-                fetchLogs(); 
             })
             .catch(err => {
                 console.error(err);
@@ -223,46 +221,51 @@
             });
     }
 
-    // --- 刮刮樂設定邏輯 ---
+    // --- 修改後的刮刮樂設定邏輯 ---
     function setupScratchCard(data) {
-        // 1. 顯示刮刮樂區域
         wrapper.style.display = "block";
-        revealBtn.style.display = "inline-block";
-
-        // 2. 填入獎品內容
         prizeDiv.innerText = data.prizeName;
         prizeUrlData = data.prizeUrl || "";
 
-        // 3. 處理「已使用」的情況
         if (data.result === "played") {
-             // 選擇 A: 讓使用者再刮一次回味
-             // 選擇 B: 直接顯示 (這裡我們選 A，但修改提示文字)
-             statusMsg.innerHTML = "<small>⚠️ 此序號已使用過，這是當時的結果：</small>";
-        }
+             // 🎁 情況 A：已使用過 -> 直接顯示獎品 (不給刮)
+             statusMsg.innerHTML = "<small style='color:#f57f17'>⚠️ 這個禮物已經領過囉，這是當時的結果：</small>";
+             
+             canvas.style.display = "none"; // 隱藏刮刮塗層
+             hint.style.display = "none";   // 隱藏手指提示
+             revealBtn.style.display = "none"; // 隱藏「直接打開」按鈕
 
-        // 4. 重置畫布與狀態
-        resetCanvas();
-        canvas.style.opacity = "1";
-        canvas.style.display = "block";
-        hint.style.display = "block";
-        
-        // 綁定刮刮樂事件
-        initScratchEvents();
+             // 直接顯示領獎按鈕 (如果有網址)
+             if (prizeUrlData) {
+                rewardLink.href = prizeUrlData;
+                rewardLink.style.display = "inline-block";
+             }
+
+        } else {
+             // 🆕 情況 B：新抽獎 -> 正常顯示刮刮樂
+             revealBtn.style.display = "inline-block";
+             resetCanvas(); // 畫上金色塗層
+             canvas.style.opacity = "1";
+             canvas.style.display = "block";
+             hint.style.display = "block";
+             initScratchEvents(); // 綁定事件
+        }
     }
 
-    // --- 繪圖與刮除邏輯 (保留你原本的 Code) ---
+    // --- 繪圖與刮除邏輯 ---
     let isDrawing = false;
     let firstScratch = false;
 
     function resetCanvas() {
         ctx.globalCompositeOperation = "source-over";
-        ctx.fillStyle = "silver"; // 銀漆顏色
+        ctx.fillStyle = "#FFD700"; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // 可以加一點雜訊或文字讓它看起來更像刮刮樂
-        ctx.fillStyle = "#999";
-        ctx.font = "20px Arial";
-        ctx.fillText("曼鯊鯊", 120, 80);
+        ctx.fillStyle = "#B8860B"; 
+        ctx.font = "bold 24px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("🎄 Merry Christmas 🎄", canvas.width/2, canvas.height/2);
     }
 
     function scratch(e) {
@@ -297,75 +300,48 @@
             prizeDiv.style.visibility = "visible";
             revealBtn.style.display = "none";
 
-            // 如果有領獎連結才顯示
             if (prizeUrlData) {
                 rewardLink.href = prizeUrlData;
                 rewardLink.style.display = "inline-block";
             }
-        }, 800);
+        }, 600);
     }
 
     function checkScratchPercent() {
-        // 降低頻率：簡單判斷，如果刮了一定程度就自動開獎
-        // 為了效能，不要每次 move 都計算，這裡示範簡單版
-        // 實際優化可用計數器限制 getImageData 呼叫次數
-        if (Math.random() > 0.1) return; // 只有 10% 的機率檢查 (優化效能)
+        if (Math.random() > 0.1) return; 
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         let cleared = 0;
         const len = imageData.data.length;
-        for (let i = 3; i < len; i += 16) { // 間隔取樣加速
+        for (let i = 3; i < len; i += 16) { 
             if (imageData.data[i] === 0) cleared++;
         }
         
-        // 這裡除以 4 是因為間隔取樣
         const totalPixels = (canvas.width * canvas.height) / 4; 
         const percent = (cleared / totalPixels) * 100;
 
-        if (percent > 60 && canvas.style.opacity !== "0") { // 門檻設為 60%
+        if (percent > 60 && canvas.style.opacity !== "0") { 
             revealPrize();
         }
     }
 
     function initScratchEvents() {
-        // 滑鼠
         canvas.onmousedown = () => isDrawing = true;
         canvas.onmouseup = () => isDrawing = false;
         canvas.onmousemove = scratch;
 
-        // 觸控
         canvas.ontouchstart = (e) => { isDrawing = true; e.preventDefault(); };
         canvas.ontouchend = (e) => { isDrawing = false; e.preventDefault(); };
         canvas.ontouchmove = scratch;
         
-        // 按鈕
         revealBtn.onclick = revealPrize;
     }
 
-    // 防止手機下拉刷新
     document.body.addEventListener("touchmove", function(e) {
         if (e.target.closest(".wrapper") || e.target === canvas) {
             e.preventDefault();
         }
     }, { passive: false });
-
-    // --- 抓取紀錄 (與之前相同) ---
-    function fetchLogs() {
-        fetch(`${GAS_API_URL}?action=getLastResult`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success") {
-                    document.getElementById("todayCount").innerText = "今日抽獎人數：" + data.todayCount;
-                    const tbody = document.querySelector("#logTable tbody");
-                    tbody.innerHTML = "";
-                    data.logs.forEach(log => {
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `<td style="color:${log.color}">${log.prize}</td><td>${log.time.split(" ")[1]}</td>`;
-                        tbody.appendChild(tr);
-                    });
-                }
-            });
-    }
   </script>
 </body>
 </html>
