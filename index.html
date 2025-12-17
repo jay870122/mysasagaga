@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>曼鯊鯊刮刮樂</title>
+    <style>
+        body { text-align: center; font-family: "微軟正黑體", sans-serif; background-color: #f0f2f5;}
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input { padding: 10px; font-size: 16px; width: 60%; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 5px; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #resultArea { margin-top: 20px; font-weight: bold; font-size: 1.2em; min-height: 50px;}
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🦈 曼鯊鯊刮刮樂 🦈</h1>
+    
+    <div id="inputSection">
+        <input type="text" id="serialInput" placeholder="請輸入序號">
+        <button id="drawBtn" onclick="manualClick()">開始刮獎</button>
+    </div>
+
+    <div id="resultArea"></div>
+
+    <hr>
+
+    <h3>🎉 最新中獎名單</h3>
+    <p id="todayCount" style="font-size: 0.9em; color: #666;">今日抽獎人數：載入中...</p>
+    <table id="logTable">
+        <thead>
+            <tr><th>獎品</th><th>時間</th></tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    // ⚠️ 請換成你的 GAS 部署網址
+    const GAS_API_URL = "https://script.google.com/macros/s/你的ID/exec";
+
+    // 頁面載入時執行
+    window.onload = function() {
+        // 1. 先載入中獎紀錄 (不管有沒有序號都要顯示)
+        fetchLogs();
+
+        // 2. 偵測網址參數
+        const params = new URLSearchParams(window.location.search);
+        const codeFromUrl = params.get('code');
+
+        if (codeFromUrl) {
+            // 如果網址有序號，自動填入並執行
+            document.getElementById("serialInput").value = codeFromUrl;
+            startLottery(codeFromUrl);
+        }
+    };
+
+    // 手動點擊按鈕時觸發
+    function manualClick() {
+        const code = document.getElementById("serialInput").value.trim();
+        startLottery(code);
+    }
+
+    // 核心抽獎函式
+    function startLottery(code) {
+        if (!code) {
+            alert("請輸入序號！");
+            return;
+        }
+
+        // UI 鎖定，避免重複點擊
+        const btn = document.getElementById("drawBtn");
+        const input = document.getElementById("serialInput");
+        const resultArea = document.getElementById("resultArea");
+        
+        btn.disabled = true;
+        input.disabled = true;
+        resultArea.innerHTML = "⏳ 曼鯊鯊正在查詢序號...";
+
+        // 呼叫 GAS API
+        fetch(`${GAS_API_URL}?code=${code}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "error") {
+                    resultArea.innerHTML = `<span style="color:red">❌ ${data.message}</span>`;
+                    // 錯誤時解鎖 UI 讓使用者重試
+                    btn.disabled = false;
+                    input.disabled = false;
+                } else {
+                    // 成功獲得資料
+                    // data.result 可能是 "new"(新抽) 或 "played"(已抽過)
+                    // data.prizeName 是獎品名稱
+                    
+                    // 這裡你可以決定要直接顯示文字，還是呼叫刮刮樂 Canvas
+                    displayPrize(data);
+                    
+                    // 刷新紀錄
+                    fetchLogs();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                resultArea.innerHTML = "連線失敗，請檢查網路或稍後再試";
+                btn.disabled = false;
+                input.disabled = false;
+            });
+    }
+
+    // 顯示結果 (這裡可以之後改成你的刮刮樂 canvas 邏輯)
+    function displayPrize(data) {
+        const resultArea = document.getElementById("resultArea");
+        
+        let html = "";
+        if (data.result === "played") {
+            html += "<p>⚠️ 這張序號已經使用過囉！</p>";
+        }
+        
+        html += `<h2 style="color: #d32f2f;">${data.prizeName}</h2>`;
+        
+        if (data.prizeUrl) {
+            html += `<a href="${data.prizeUrl}" target="_blank" style="display:inline-block; padding:10px 20px; background:#28a745; color:white; text-decoration:none; border-radius:5px;">🎁 點此領獎</a>`;
+        }
+
+        resultArea.innerHTML = html;
+        
+        // 成功後通常不解鎖按鈕，避免重複抽同一個序號
+    }
+
+    // 抓取紀錄函式
+    function fetchLogs() {
+        fetch(`${GAS_API_URL}?action=getLastResult`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success") {
+                    document.getElementById("todayCount").innerText = "今日抽獎人數：" + data.todayCount;
+                    const tbody = document.querySelector("#logTable tbody");
+                    tbody.innerHTML = "";
+                    data.logs.forEach(log => {
+                        const tr = document.createElement("tr");
+                        tr.innerHTML = `<td style="color:${log.color}">${log.prize}</td><td>${log.time.split(" ")[1]}</td>`; // 只顯示時間部分比較簡潔
+                        tbody.appendChild(tr);
+                    });
+                }
+            });
+    }
+</script>
+
+</body>
+</html>
