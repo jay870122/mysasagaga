@@ -22,23 +22,23 @@
     
     h2 { 
       color: #c62828; 
-      margin-bottom: 10px; /* 稍微縮減間距 */
+      margin-bottom: 10px; 
       text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
     }
 
-    /* ----- 新增：公告區塊 ----- */
+    /* ----- 公告區塊 ----- */
     #noticeBoard {
       width: 85%;
       max-width: 400px;
-      margin: 0 auto 15px auto; /* 與下方保持距離 */
+      margin: 0 auto 15px auto; 
       padding: 10px 15px;
-      background-color: #fff8e1; /* 淡黃色背景 */
-      border: 2px dashed #ff8f00; /* 虛線邊框 */
+      background-color: #fff8e1; 
+      border: 2px dashed #ff8f00; 
       border-radius: 10px;
       color: #5d4037;
       font-size: 14px;
       line-height: 1.5;
-      display: none; /* 預設隱藏，抓到資料才顯示 */
+      display: none; 
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       position: relative;
     }
@@ -46,6 +46,51 @@
       content: "🔔 公告：";
       font-weight: bold;
       color: #d84315;
+    }
+
+    /* ----- 新增：進度條與狀態區 ----- */
+    #loadingContainer {
+      width: 80%;
+      max-width: 300px;
+      margin: 10px auto;
+      display: none; /* 預設隱藏 */
+    }
+
+    #statusMessage { 
+      font-size: 1.1em; 
+      color: #c62828; 
+      margin-bottom: 8px; 
+      font-weight: bold; 
+    }
+
+    .progress-box {
+      width: 100%;
+      height: 20px;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      border: 2px solid #2e7d32; /* 聖誕綠邊框 */
+      overflow: hidden;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      /* 拐杖糖條紋效果 */
+      background: repeating-linear-gradient(
+        45deg,
+        #c62828,
+        #c62828 10px,
+        #ffcdd2 10px,
+        #ffcdd2 20px
+      );
+      transition: width 0.3s ease;
+      animation: candy-move 1s linear infinite;
+    }
+
+    @keyframes candy-move {
+      0% { background-position: 0 0; }
+      100% { background-position: 28px 0; }
     }
 
     /* ----- 輸入框區域 ----- */
@@ -160,7 +205,8 @@
     }
     #revealBtn:hover { background: #f9a825; }
 
-    #statusMessage { font-size: 1.1em; color: #555; margin: 15px; font-weight: bold; min-height: 24px;}
+    /* 錯誤訊息樣式 */
+    .error-msg { color: #c62828; font-weight: bold; margin: 10px; }
   </style>
 </head>
 <body>
@@ -169,7 +215,14 @@
   
   <div id="noticeBoard">載入公告中...</div>
 
-  <div id="statusMessage"></div>
+  <div id="loadingContainer">
+    <div id="statusMessage">🎅 聖誕老公公正在查詢...</div>
+    <div class="progress-box">
+        <div id="progressBar" class="progress-bar"></div>
+    </div>
+  </div>
+
+  <div id="errorArea" class="error-msg"></div>
 
   <div id="inputSection">
     <div style="margin-bottom:10px; font-weight:bold; color:#2e7d32;">🎁 請輸入聖誕序號：</div>
@@ -200,27 +253,27 @@
     const revealBtn = document.getElementById("revealBtn");
     const hint = document.getElementById("hint");
     const wrapper = document.getElementById("scratchWrapper");
-    const statusMsg = document.getElementById("statusMessage");
     const noticeBoard = document.getElementById("noticeBoard");
+    
+    // 進度條相關元素
+    const loadingContainer = document.getElementById("loadingContainer");
+    const progressBar = document.getElementById("progressBar");
+    const errorArea = document.getElementById("errorArea");
+    let progressInterval;
 
     window.onload = function() {
-        // 1. 先去抓公告 (不管有沒有序號都抓)
         fetchNotice();
 
-        // 2. 處理序號邏輯
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
 
         if (code) {
-            statusMsg.innerText = "🎅 聖誕老公公正在查詢...";
             startLottery(code);
         } else {
             document.getElementById("inputSection").style.display = "block";
-            statusMsg.innerText = "";
         }
     };
 
-    // --- 新增：抓取公告 ---
     function fetchNotice() {
         fetch(`${GAS_API_URL}?action=getNotice`)
             .then(res => res.json())
@@ -230,9 +283,7 @@
                     noticeBoard.style.display = "block";
                 }
             })
-            .catch(err => {
-                console.log("公告載入失敗", err);
-            });
+            .catch(err => console.log("公告載入失敗", err));
     }
 
     function manualStart() {
@@ -240,18 +291,47 @@
         if(!inputCode) return alert("請輸入序號");
         
         document.getElementById("inputSection").style.display = "none";
-        statusMsg.innerText = "🎅 聖誕老公公正在查詢...";
         startLottery(inputCode);
     }
 
+    // --- 進度條控制函數 ---
+    function startLoading() {
+        loadingContainer.style.display = "block";
+        errorArea.innerText = ""; // 清除錯誤
+        progressBar.style.width = "0%";
+        
+        // 模擬進度：前 2 秒跑比較快，後面變慢，營造還在努力的感覺
+        let width = 0;
+        progressInterval = setInterval(() => {
+            if (width < 60) {
+                width += Math.random() * 5; // 初期快
+            } else if (width < 90) {
+                width += Math.random() * 2; // 後期慢
+            }
+            if (width > 90) width = 90; // 卡在 90% 等待回應
+            progressBar.style.width = width + "%";
+        }, 200);
+    }
+
+    function stopLoading() {
+        clearInterval(progressInterval);
+        progressBar.style.width = "100%";
+        // 稍微延遲一下讓使用者看到 100%
+        setTimeout(() => {
+            loadingContainer.style.display = "none";
+        }, 500);
+    }
+
     function startLottery(code) {
+        startLoading(); // 開始跑進度條
+
         fetch(`${GAS_API_URL}?code=${code}`)
             .then(res => res.json())
             .then(data => {
-                statusMsg.innerText = ""; 
-                
+                stopLoading(); // 停止進度條
+
                 if (data.status === "error") {
-                    statusMsg.innerHTML = `<span style="color:#c62828">❌ ${data.message}</span>`;
+                    errorArea.innerHTML = `❌ ${data.message}`;
                     document.getElementById("inputSection").style.display = "block"; 
                     return;
                 }
@@ -260,7 +340,8 @@
             })
             .catch(err => {
                 console.error(err);
-                statusMsg.innerText = "連線失敗，請檢查網路";
+                stopLoading();
+                errorArea.innerText = "連線失敗，請檢查網路或稍後再試";
                 document.getElementById("inputSection").style.display = "block";
             });
     }
@@ -271,7 +352,8 @@
         prizeUrlData = data.prizeUrl || "";
 
         if (data.result === "played") {
-             statusMsg.innerHTML = "<small style='color:#f57f17'>⚠️ 這個禮物已經領過囉，這是當時的結果：</small>";
+             // 顯示已領過訊息 (這裡不視為 error，所以用橘色提示)
+             errorArea.innerHTML = "<small style='color:#f57f17'>⚠️ 這個禮物已經領過囉，這是當時的結果：</small>";
              
              canvas.style.display = "none"; 
              hint.style.display = "none";   
@@ -283,6 +365,8 @@
              }
 
         } else {
+             // 新抽獎
+             errorArea.innerText = "";
              revealBtn.style.display = "inline-block";
              resetCanvas();
              canvas.style.opacity = "1";
