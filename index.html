@@ -22,8 +22,30 @@
     
     h2 { 
       color: #c62828; 
-      margin-bottom: 20px; 
+      margin-bottom: 10px; /* 稍微縮減間距 */
       text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+
+    /* ----- 新增：公告區塊 ----- */
+    #noticeBoard {
+      width: 85%;
+      max-width: 400px;
+      margin: 0 auto 15px auto; /* 與下方保持距離 */
+      padding: 10px 15px;
+      background-color: #fff8e1; /* 淡黃色背景 */
+      border: 2px dashed #ff8f00; /* 虛線邊框 */
+      border-radius: 10px;
+      color: #5d4037;
+      font-size: 14px;
+      line-height: 1.5;
+      display: none; /* 預設隱藏，抓到資料才顯示 */
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    #noticeBoard::before {
+      content: "🔔 公告：";
+      font-weight: bold;
+      color: #d84315;
     }
 
     /* ----- 輸入框區域 ----- */
@@ -144,6 +166,8 @@
 <body>
 
   <h2>🎄 曼鯊鯊聖誕刮刮樂 🎅</h2>
+  
+  <div id="noticeBoard">載入公告中...</div>
 
   <div id="statusMessage"></div>
 
@@ -177,8 +201,13 @@
     const hint = document.getElementById("hint");
     const wrapper = document.getElementById("scratchWrapper");
     const statusMsg = document.getElementById("statusMessage");
+    const noticeBoard = document.getElementById("noticeBoard");
 
     window.onload = function() {
+        // 1. 先去抓公告 (不管有沒有序號都抓)
+        fetchNotice();
+
+        // 2. 處理序號邏輯
         const params = new URLSearchParams(window.location.search);
         const code = params.get('code');
 
@@ -190,6 +219,21 @@
             statusMsg.innerText = "";
         }
     };
+
+    // --- 新增：抓取公告 ---
+    function fetchNotice() {
+        fetch(`${GAS_API_URL}?action=getNotice`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === "success" && data.notice) {
+                    noticeBoard.innerText = data.notice;
+                    noticeBoard.style.display = "block";
+                }
+            })
+            .catch(err => {
+                console.log("公告載入失敗", err);
+            });
+    }
 
     function manualStart() {
         const inputCode = document.getElementById("serialInput").value.trim();
@@ -221,38 +265,33 @@
             });
     }
 
-    // --- 修改後的刮刮樂設定邏輯 ---
     function setupScratchCard(data) {
         wrapper.style.display = "block";
         prizeDiv.innerText = data.prizeName;
         prizeUrlData = data.prizeUrl || "";
 
         if (data.result === "played") {
-             // 🎁 情況 A：已使用過 -> 直接顯示獎品 (不給刮)
              statusMsg.innerHTML = "<small style='color:#f57f17'>⚠️ 這個禮物已經領過囉，這是當時的結果：</small>";
              
-             canvas.style.display = "none"; // 隱藏刮刮塗層
-             hint.style.display = "none";   // 隱藏手指提示
-             revealBtn.style.display = "none"; // 隱藏「直接打開」按鈕
+             canvas.style.display = "none"; 
+             hint.style.display = "none";   
+             revealBtn.style.display = "none"; 
 
-             // 直接顯示領獎按鈕 (如果有網址)
              if (prizeUrlData) {
                 rewardLink.href = prizeUrlData;
                 rewardLink.style.display = "inline-block";
              }
 
         } else {
-             // 🆕 情況 B：新抽獎 -> 正常顯示刮刮樂
              revealBtn.style.display = "inline-block";
-             resetCanvas(); // 畫上金色塗層
+             resetCanvas();
              canvas.style.opacity = "1";
              canvas.style.display = "block";
              hint.style.display = "block";
-             initScratchEvents(); // 綁定事件
+             initScratchEvents(); 
         }
     }
 
-    // --- 繪圖與刮除邏輯 ---
     let isDrawing = false;
     let firstScratch = false;
 
