@@ -48,12 +48,12 @@
       color: #d84315;
     }
 
-    /* ----- 新增：進度條與狀態區 ----- */
+    /* ----- 進度條與狀態區 ----- */
     #loadingContainer {
       width: 80%;
       max-width: 300px;
       margin: 10px auto;
-      display: none; /* 預設隱藏 */
+      display: none; 
     }
 
     #statusMessage { 
@@ -68,7 +68,7 @@
       height: 20px;
       background-color: #e0e0e0;
       border-radius: 10px;
-      border: 2px solid #2e7d32; /* 聖誕綠邊框 */
+      border: 2px solid #2e7d32; 
       overflow: hidden;
       box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
     }
@@ -76,7 +76,6 @@
     .progress-bar {
       width: 0%;
       height: 100%;
-      /* 拐杖糖條紋效果 */
       background: repeating-linear-gradient(
         45deg,
         #c62828,
@@ -237,7 +236,7 @@
   </div>
 
   <div id="actionArea">
-    <a id="rewardLink" href="#" target="_blank">👉 點我前往LINE領取點數</a>
+    <a id="rewardLink" href="#" target="_blank">👉 點我前往領取兌換卷</a>
     <br>
     <button id="revealBtn">直接打開禮物 🎁</button>
   </div>
@@ -255,7 +254,7 @@
     const wrapper = document.getElementById("scratchWrapper");
     const noticeBoard = document.getElementById("noticeBoard");
     
-    // 進度條相關元素
+    // 進度條相關
     const loadingContainer = document.getElementById("loadingContainer");
     const progressBar = document.getElementById("progressBar");
     const errorArea = document.getElementById("errorArea");
@@ -294,21 +293,19 @@
         startLottery(inputCode);
     }
 
-    // --- 進度條控制函數 ---
     function startLoading() {
         loadingContainer.style.display = "block";
-        errorArea.innerText = ""; // 清除錯誤
+        errorArea.innerText = ""; 
         progressBar.style.width = "0%";
         
-        // 模擬進度：前 2 秒跑比較快，後面變慢，營造還在努力的感覺
         let width = 0;
         progressInterval = setInterval(() => {
             if (width < 60) {
-                width += Math.random() * 5; // 初期快
+                width += Math.random() * 5; 
             } else if (width < 90) {
-                width += Math.random() * 2; // 後期慢
+                width += Math.random() * 2; 
             }
-            if (width > 90) width = 90; // 卡在 90% 等待回應
+            if (width > 90) width = 90; 
             progressBar.style.width = width + "%";
         }, 200);
     }
@@ -316,19 +313,18 @@
     function stopLoading() {
         clearInterval(progressInterval);
         progressBar.style.width = "100%";
-        // 稍微延遲一下讓使用者看到 100%
         setTimeout(() => {
             loadingContainer.style.display = "none";
         }, 500);
     }
 
     function startLottery(code) {
-        startLoading(); // 開始跑進度條
+        startLoading(); 
 
         fetch(`${GAS_API_URL}?code=${code}`)
             .then(res => res.json())
             .then(data => {
-                stopLoading(); // 停止進度條
+                stopLoading(); 
 
                 if (data.status === "error") {
                     errorArea.innerHTML = `❌ ${data.message}`;
@@ -351,8 +347,21 @@
         prizeDiv.innerText = data.prizeName;
         prizeUrlData = data.prizeUrl || "";
 
+        // --- 核心修改：動態設定按鈕文字 ---
+        let btnText = "👉 點我前往領取兌換卷"; // 預設
+        
+        // 檢查獎品名稱包含的關鍵字
+        if (data.prizeName.indexOf("點數") !== -1) {
+            btnText = "👉 點我前往LINE領取點數";
+        } else if (data.prizeName.indexOf("折") !== -1) {
+            btnText = "👉 點我前往領取優惠卷";
+        }
+        
+        // 更新按鈕文字
+        rewardLink.innerText = btnText;
+        // ------------------------------
+
         if (data.result === "played") {
-             // 顯示已領過訊息 (這裡不視為 error，所以用橘色提示)
              errorArea.innerHTML = "<small style='color:#f57f17'>⚠️ 這個禮物已經領過囉，這是當時的結果：</small>";
              
              canvas.style.display = "none"; 
@@ -365,7 +374,6 @@
              }
 
         } else {
-             // 新抽獎
              errorArea.innerText = "";
              revealBtn.style.display = "inline-block";
              resetCanvas();
